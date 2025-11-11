@@ -481,3 +481,85 @@ This skill includes three comprehensive reference guides. Load these into contex
 - **`terminfo_guide.md`** - Complete terminfo database reference and troubleshooting
 - **`zsh_configuration.md`** - Comprehensive Zsh configuration including autoload and fpath
 - **`unicode_troubleshooting.md`** - Unicode/UTF-8 character rendering and encoding issues
+
+
+## Session Capture and Replay System
+
+### Overview
+
+The session capture system allows you to record terminal sessions, analyze them for issues, apply fixes, and replay sessions to verify the fixes work. This is especially useful for:
+- Debugging Unicode/rendering issues that are hard to describe
+- Creating before/after comparisons when testing fixes
+- Isolating terminal problems in a controlled environment
+- Automated testing of terminal configurations
+
+### 5. Session Capture
+
+Record terminal sessions with full environment context for debugging:
+
+```bash
+# Basic session recording
+bash scripts/session_capture.sh start
+
+# Record with specific name and description
+bash scripts/session_capture.sh -n unicode-issue -d "Emoji backspace problem" start
+
+# Record in isolated tmux session with minimal config
+bash scripts/session_capture.sh -t -m -n test-session start
+
+# List all recorded sessions
+bash scripts/session_capture.sh list
+
+# Replay a session
+bash scripts/session_capture.sh replay unicode-issue
+
+# Compare two sessions (before/after fix)
+bash scripts/session_capture.sh compare unicode-before unicode-after
+
+# Show session details
+bash scripts/session_capture.sh show session-name
+
+# Clean up sessions
+bash scripts/session_capture.sh clean session-name
+```
+
+**Session Features**:
+- **Auto-captures**: Environment variables, locale settings, diagnostics
+- **Tmux isolation**: Run tests in isolated tmux session with custom config
+- **Minimal config**: Use stripped-down zshrc for clean testing
+- **Timing data**: Replay sessions with original timing (if available)
+- **Metadata**: JSON metadata with session details
+
+**When to use**: User reports an issue that's hard to reproduce, you need to test a fix in isolation, or you want to create before/after comparisons.
+
+### 6. Session Validation
+
+Automatically analyze captured sessions to identify common terminal issues:
+
+```bash
+# Validate a recorded session
+python3 scripts/session_validator.py ~/.terminal-guru/sessions/session-name
+```
+
+**Validation Checks**:
+- UTF-8 locale configuration
+- Environment variable issues
+- Character encoding problems
+- Terminal capabilities
+- Unicode rendering issues (emoji, CJK, box drawing)
+- Backspace character counts
+
+**When to use**: After capturing a session to automatically identify what might be wrong.
+
+### 7. Automated Testing
+
+Run predefined test scenarios to validate terminal configuration:
+
+```bash
+# Run specific test
+bash scripts/session_test.sh unicode-emoji
+
+# Run all tests
+bash scripts/session_test.sh all
+```
+
