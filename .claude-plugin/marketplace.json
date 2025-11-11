@@ -6,12 +6,12 @@
   },
   "metadata": {
     "description": "Development tools including terminal configuration and Helm chart development",
-    "version": "1.1.0"
+    "version": "1.2.0"
   },
   "plugins": [
     {
       "name": "terminal-guru",
-      "description": "Comprehensive terminal configuration, diagnostics, and troubleshooting including terminfo database management, Zsh autoload functions and fpath configuration, Unicode/UTF-8 character rendering, and TUI application support",
+      "description": "Comprehensive terminal configuration, diagnostics, and troubleshooting including terminfo database management, Zsh autoload functions and fpath configuration, Unicode/UTF-8 character rendering, TUI application support, and session capture/replay system for systematic debugging with tmux isolation and automated testing",
       "source": "./",
       "strict": false,
       "skills": [
