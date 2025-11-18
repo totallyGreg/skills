@@ -1,6 +1,7 @@
 ---
 name: skill-creator
 description: Guide for creating effective skills. This skill should be used when users want to create a new skill (or update an existing skill) that extends Claude's capabilities with specialized knowledge, workflows, or tool integrations.
+version: 1.0.0
 license: Complete terms in LICENSE.txt
 ---
 
@@ -31,7 +32,9 @@ skill-name/
 ├── SKILL.md (required)
 │   ├── YAML frontmatter metadata (required)
 │   │   ├── name: (required)
-│   │   └── description: (required)
+│   │   ├── description: (required)
+│   │   ├── version: (required)
+│   │   └── allowed-tools: (optional)
 │   └── Markdown instructions (required)
 └── Bundled Resources (optional)
     ├── scripts/          - Executable code (Python/Bash/etc.)
@@ -41,7 +44,7 @@ skill-name/
 
 #### SKILL.md (required)
 
-**Metadata Quality:** The `name` and `description` in YAML frontmatter determine when Claude will use the skill. Be specific about what the skill does and when to use it. Use the third-person (e.g. "This skill should be used when..." instead of "Use this skill when...").
+**Metadata Quality:** The `name`, `description`, and `version` in YAML frontmatter are required fields. The `name` and `description` determine when Claude will use the skill. Be specific about what the skill does and when to use it. Use the third-person (e.g. "This skill should be used when..." instead of "Use this skill when..."). The optional `allowed-tools` field restricts which tools Claude can use (see references/advanced-topics.md).
 
 #### Bundled Resources (optional)
 
@@ -129,6 +132,8 @@ Example: When building a `big-query` skill to handle queries like "How many user
 
 To establish the skill's contents, analyze each concrete example to create a list of the reusable resources to include: scripts, references, and assets.
 
+**Content Organization:** When planning the skill, consider the token budget constraints (SKILL.md should be <5k tokens, <500 lines). Decide what belongs in SKILL.md versus references/ - keep only essential workflow instructions in SKILL.md and move detailed schemas, API documentation, and extensive examples to references/ files. For optimization strategies and guidelines on managing token budgets effectively, see `references/advanced-topics.md`.
+
 ### Step 3: Initializing the Skill
 
 At this point, it is time to actually create the skill.
@@ -165,6 +170,24 @@ Also, delete any example files and directories not needed for the skill. The ini
 #### Update SKILL.md
 
 **Writing Style:** Write the entire skill using **imperative/infinitive form** (verb-first instructions), not second person. Use objective, instructional language (e.g., "To accomplish X, do Y" rather than "You should do X" or "If you need to do X"). This maintains consistency and clarity for AI consumption.
+
+**Naming Convention:** Use gerund form (verb-ing) for skill names to describe ongoing capability. Examples:
+- Good: `processing-pdfs`, `creating-diagrams`, `analyzing-code`
+- Bad: `pdf-processor`, `diagram-tool`, `code-analyzer`
+
+**Description Quality Checklist:**
+- Specific about what the skill does (not vague like "PDF skill")
+- Includes trigger information (when/how it should be used)
+- Within 1024 character limit
+- Third-person sentence format
+- See `references/advanced-topics.md` for more examples and guidelines
+
+**Version Field:**
+- Always include a `version` field in YAML frontmatter
+- Use semantic versioning (MAJOR.MINOR.PATCH)
+- For new skills, start with `version: 1.0.0`
+
+**Optional Fields:** Consider adding `allowed-tools` to restrict tool access for security or focus (see `references/advanced-topics.md`). For platform-specific deployment considerations (API, Claude Code, Claude.ai, SDK), consult `references/advanced-topics.md`.
 
 To complete SKILL.md, answer the following questions:
 
@@ -208,160 +231,46 @@ After packaging the skill, optionally add it to a Claude Code plugin marketplace
 
 Skip this step if distributing the skill as a standalone zip file.
 
-For comprehensive information about plugin marketplaces, refer to `references/plugin_marketplace_guide.md`.
+**For comprehensive marketplace documentation**, see `references/plugin_marketplace_guide.md` which covers marketplace structure, organization strategies, version management, and best practices.
 
-#### Understanding Plugin Marketplaces
+#### Quick Start
 
-A plugin marketplace allows users to install skills via Claude Code's plugin system using commands like:
-```bash
-/plugin marketplace add username/repository
-/plugin install plugin-name@marketplace-name
-```
+Use the `add_to_marketplace.py` script to manage marketplaces:
 
-Plugin marketplaces require:
-1. A `.claude-plugin/marketplace.json` file in the repository root
-2. A Git repository (GitHub, GitLab, etc.)
-3. Skills organized in the repository
-
-#### Marketplace Structure
-
-The marketplace.json defines:
-- **Marketplace metadata** - Name, owner, description, version
-- **Plugins** - Collections of related skills
-- **Skills** - Individual skill directories
-
-Example structure:
-```json
-{
-  "name": "my-marketplace",
-  "owner": {
-    "name": "Your Name",
-    "email": "email@example.com"
-  },
-  "metadata": {
-    "description": "Collection description",
-    "version": "1.0.0"
-  },
-  "plugins": [
-    {
-      "name": "plugin-name",
-      "description": "Plugin description",
-      "source": "./",
-      "strict": false,
-      "skills": [
-        "./skill-one",
-        "./skill-two"
-      ]
-    }
-  ]
-}
-```
-
-#### Managing the Marketplace
-
-Use the `add_to_marketplace.py` script to manage the marketplace:
-
-**Initialize a new marketplace:**
+**Initialize new marketplace:**
 ```bash
 scripts/add_to_marketplace.py init \
   --name my-marketplace \
   --owner-name "Your Name" \
   --owner-email "email@example.com" \
-  --description "My skill collection"
+  --description "Skill collection description"
 ```
 
-**Create a new plugin with skills:**
+**Add skill to marketplace:**
 ```bash
 scripts/add_to_marketplace.py create-plugin my-plugin \
   "Plugin description" \
-  --skills ./skill-one ./skill-two ./skill-three
+  --skills ./skill-name
 ```
 
-**Add a skill to existing plugin:**
-```bash
-scripts/add_to_marketplace.py add-skill my-plugin ./new-skill
-```
-
-**List marketplace contents:**
-```bash
-scripts/add_to_marketplace.py list
-```
-
-#### Publishing Workflow
-
-1. **Initialize marketplace** (if not already done):
-```bash
-scripts/add_to_marketplace.py init \
-  --name terminal-tools \
-  --owner-name "Your Name" \
-  --owner-email "you@example.com" \
-  --description "Terminal configuration tools"
-```
-
-2. **Create plugin or add skills**:
-```bash
-# Create new plugin
-scripts/add_to_marketplace.py create-plugin terminal-guru \
-  "Terminal diagnostics and configuration" \
-  --skills ./terminal-guru
-
-# Or add to existing plugin
-scripts/add_to_marketplace.py add-skill terminal-guru ./another-skill
-```
-
-3. **Commit and push to Git**:
+**Publish to Git:**
 ```bash
 git add .claude-plugin/ skill-name/
 git commit -m "Add skill-name to marketplace"
 git push
 ```
 
-4. **Users can install**:
+Users can then install with:
 ```bash
 /plugin marketplace add username/repository
 /plugin install plugin-name@marketplace-name
 ```
 
-#### Organizing Multiple Skills
-
-Common patterns for organizing skills in marketplaces:
-
-**Pattern 1: Single plugin with related skills**
-```
-.claude-plugin/marketplace.json
-├── Plugin: "development-tools"
-    ├── ./terminal-guru
-    ├── ./git-helper
-    └── ./code-reviewer
-```
-
-**Pattern 2: Multiple plugins by domain**
-```
-.claude-plugin/marketplace.json
-├── Plugin: "terminal-tools"
-│   ├── ./terminal-guru
-│   └── ./shell-config
-└── Plugin: "document-tools"
-    ├── ./pdf-tools
-    └── ./markdown-tools
-```
-
-**Pattern 3: Plugin per skill** (for unrelated skills)
-```
-.claude-plugin/marketplace.json
-├── Plugin: "terminal-guru"
-│   └── ./terminal-guru
-└── Plugin: "brand-guidelines"
-    └── ./brand-guidelines
-```
-
-#### Best Practices
-
-1. **Descriptive plugin names** - Use clear, searchable names
-2. **Meaningful descriptions** - Help users understand what the plugin provides
-3. **Logical grouping** - Group related skills into plugins
-4. **Version management** - Update marketplace version when adding/changing skills
-5. **README documentation** - Include installation instructions in repository README
+**See `references/plugin_marketplace_guide.md` for**:
+- Detailed marketplace structure and configuration
+- Organization strategies (single plugin, multi-plugin, per-skill patterns)
+- Version management and semantic versioning
+- Best practices and troubleshooting
 
 ### Step 7: Iterate
 
@@ -371,5 +280,15 @@ After testing the skill, users may request improvements. Often this happens righ
 1. Use the skill on real tasks
 2. Notice struggles or inefficiencies
 3. Identify how SKILL.md or bundled resources should be updated
-4. Implement changes and test again
-5. If published in marketplace, update version and push changes
+4. **Ask the user what the new version should be** using the AskUserQuestion tool
+   - Explain the changes being made
+   - Ask for the new version number (suggest following semantic versioning)
+   - Example: "I'm updating the skill to add X. What version should this be? (current: 1.0.0, suggested: 1.1.0 for new features or 1.0.1 for fixes)"
+5. Update the `version` field in YAML frontmatter with the new version
+6. Implement changes and test again
+7. If published in marketplace, update marketplace version and push changes
+
+**Semantic versioning guidelines:**
+- **MAJOR** (1.0.0 → 2.0.0): Breaking changes or complete rewrites
+- **MINOR** (1.0.0 → 1.1.0): New features, backward-compatible
+- **PATCH** (1.0.0 → 1.0.1): Bug fixes, minor improvements
